@@ -17,7 +17,7 @@ app.use(helmet());
 app.use(cors());
 
 
-app.use( '/bookmarks', BookmarkRouter);
+app.use( '/api/bookmarks', BookmarkRouter);
 
 app.get( '/', (req,res) => {
 //   throw new Error('Error makes computer fans go brrrr');

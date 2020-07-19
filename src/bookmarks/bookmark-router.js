@@ -1,4 +1,5 @@
 const express = require('express');
+const path = require('path');
 const BookmarkRouter = express.Router();
 const BookmarkService = require('./bookmark-service');
 const xss = require('xss');
@@ -45,7 +46,7 @@ BookmarkRouter
       .then( mark => {
         res
           .status(201)
-          .location(`/bookmarks/${mark.id}`)
+          .location(path.posix.join( req.originalUrl + `/${mark.id}`))
           .json(serializedBookmark(mark));
       })
       .catch(next);
@@ -53,7 +54,7 @@ BookmarkRouter
   });
 BookmarkRouter
   .route('/:id')
-  .all((req,res,next)=>{
+  .all(express.json () ,(req,res,next)=>{
     BookmarkService.getById(
       req.app.get('db'),
       req.params.id
@@ -61,7 +62,7 @@ BookmarkRouter
       .then(mark =>{
         if(!mark){
           return res.status(404).json({
-            error : {message : 'Article doesn\'t exist... just like my waifu'}
+            error : {message : 'that bookmark doesn\'t exist... just like my waifu'}
           });
         }
         res.mark = mark;
@@ -81,11 +82,30 @@ BookmarkRouter
         res.status(204).end();
       })
       .catch(next);
+  })
+
+  .patch( express.json() , (req,res,next)=>{
+    const { title, url_address, rating, bookmark_description} = req.body;
+    const updatedContext = { title, url_address, rating, bookmark_description};    
+    const nov = Object.values(updatedContext).filter(Boolean).length;
+    if(nov === 0 ){
+      return res.status(400).json({
+        error : {
+          message : 'requested at less one of the \'title\',\'rating\',\'url\',\'description\', '
+        }
+      });
+    }
+
+    BookmarkService.updateItems(
+      req.app.get('db'),
+      req.params.id,
+      updatedContext
+    )
+      .then(()=> {
+        return res.status(204).end();
+      })
+      .catch(next);
   });
-
-//   .patch( (req,res,next)=>{
-
-//   })
 
 
 module.exports = BookmarkRouter; 
